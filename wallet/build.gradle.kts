@@ -77,6 +77,9 @@ android {
             res.srcDirs("res-prod")
             assets.srcDirs("assets-prod")
         }
+        getByName("regtest") {
+            res.srcDirs("res-regtest")
+        }
         getByName("test") {
             java.srcDirs("test")
             resources.srcDirs("test")

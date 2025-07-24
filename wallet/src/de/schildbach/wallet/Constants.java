@@ -27,6 +27,7 @@ import org.bitcoinj.core.Coin;
 import org.bitcoinj.core.Context;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.params.MainNetParams;
+import org.bitcoinj.params.RegTestParams;
 import org.bitcoinj.params.TestNet3Params;
 import org.bitcoinj.script.Script;
 import org.bitcoinj.utils.MonetaryFormat;
@@ -43,7 +44,9 @@ public final class Constants {
 
     /** Network this wallet is on (e.g. testnet or mainnet). */
     public static final NetworkParameters NETWORK_PARAMETERS =
-            !BuildConfig.FLAVOR.equals("prod") ? TestNet3Params.get() : MainNetParams.get();
+            !BuildConfig.FLAVOR.equals("prod") ?
+                    !BuildConfig.FLAVOR.equals("dev") ? RegTestParams.get() : TestNet3Params.get():
+                    MainNetParams.get();
 
     /** Bitcoinj global context. */
     public static final Context CONTEXT = new Context(NETWORK_PARAMETERS);
@@ -71,7 +74,8 @@ public final class Constants {
 
     public final static class Files {
         private static final String FILENAME_NETWORK_SUFFIX = NETWORK_PARAMETERS.getId()
-                .equals(NetworkParameters.ID_MAINNET) ? "" : "-testnet";
+                .equals(NetworkParameters.ID_MAINNET) ? "" : NETWORK_PARAMETERS.getId()
+                .equals(NetworkParameters.ID_TESTNET)? "-testnet" : "-regtest";
 
         /** Filename of the wallet. */
         public static final String WALLET_FILENAME_PROTOBUF = "wallet-protobuf" + FILENAME_NETWORK_SUFFIX;

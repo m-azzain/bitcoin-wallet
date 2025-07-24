@@ -70,6 +70,7 @@ import org.bitcoinj.core.BlockChain;
 import org.bitcoinj.core.CheckpointManager;
 import org.bitcoinj.core.Coin;
 import org.bitcoinj.core.FilteredBlock;
+import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.Peer;
 import org.bitcoinj.core.PeerAddress;
 import org.bitcoinj.core.PeerGroup;
@@ -642,6 +643,11 @@ public class BlockchainService extends LifecycleService {
 
                 final int maxConnectedPeers = application.maxConnectedPeers();
                 final Set<HostAndPort> trustedPeers = config.getTrustedPeers();
+                if (Constants.NETWORK_PARAMETERS.getId().equals(NetworkParameters.ID_REGTEST)){
+                    log.info("adding The regtest peers, 192.168.1.2, 10.0.2.2:1844");
+                    trustedPeers.add(HostAndPort.fromParts("192.168.1.2",18444));
+                    trustedPeers.add(HostAndPort.fromParts("10.0.2.2",18444));
+                }
                 final boolean trustedPeerOnly = config.isTrustedPeersOnly();
 
                 peerGroup.setMaxConnections(trustedPeerOnly ? 0 : maxConnectedPeers);
@@ -669,13 +675,15 @@ public class BlockchainService extends LifecycleService {
                 for (final HostAndPort trustedPeer : trustedPeers)
                     resolveDnsTask.resolve(trustedPeer);
 
-                if (trustedPeerOnly) {
+                if (Constants.NETWORK_PARAMETERS.getId().equals(NetworkParameters.ID_REGTEST)){
+                    log.info("regtest does not have seeds to discover the P2P network");
+                } else if (trustedPeerOnly) {
                     log.info("trusted peers only – not adding any random nodes from the P2P network");
                 } else {
                     log.info("adding random peers from the P2P network");
-                    if (syncMode == Configuration.SyncMode.CONNECTION_FILTER)
+                    if (syncMode == Configuration.SyncMode.CONNECTION_FILTER){
                         peerGroup.setRequiredServices(VersionMessage.NODE_BLOOM | VersionMessage.NODE_WITNESS);
-                    else
+                    }else
                         peerGroup.setRequiredServices(VersionMessage.NODE_WITNESS);
                 }
 

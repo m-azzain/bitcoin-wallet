@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- foreground -->
+    <color name="fg_on_dark_bg_network_significant">#99DFFF</color>
+    <color name="fg_on_dark_bg_network_insignificant">#547C50</color>
+    <color name="fg_network_significant">#005089</color>
+    <color name="fg_network_significant_darkdefault">#547C50</color>
+    <color name="fg_network_less_significant">#CC001E89</color>
+    <color name="fg_network_less_significant_darkdefault">#547C50</color>
+    <color name="fg_shortcut">#547C50</color>
+
+    <!-- app icon -->
+    <color name="appicon_gradient_start">#49F97B</color>
+    <color name="appicon_gradient_end">#547C50</color>
+</resources>
