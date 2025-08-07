@@ -113,6 +113,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 import static com.google.common.base.Preconditions.checkState;
+import static de.schildbach.wallet.Constants.NETWORK_PARAMETERS;
 
 /**
  * @author Andreas Schildbach
@@ -551,13 +552,14 @@ public class BlockchainService extends LifecycleService {
                 }
 
                 try {
-                    blockStore = new SPVBlockStore(Constants.NETWORK_PARAMETERS, blockChainFile,
+                    blockStore = new SPVBlockStore(NETWORK_PARAMETERS, blockChainFile,
                             Constants.Files.BLOCKCHAIN_STORE_CAPACITY, true);
                     blockStore.getChainHead(); // detect corruptions as early as possible
 
                     final long earliestKeyCreationTimeSecs = wallet.getEarliestKeyCreationTime();
 
-                    if (!blockChainFileExists && earliestKeyCreationTimeSecs > 0) {
+                    if (!blockChainFileExists && earliestKeyCreationTimeSecs > 0 &&
+                            !NETWORK_PARAMETERS.getId().equals(NetworkParameters.ID_REGTEST)) {
                         try {
                             log.info("loading checkpoints for birthdate {} from '{}'",
                                     DateTimeFormatter.ISO_INSTANT.format(Instant.ofEpochSecond(earliestKeyCreationTimeSecs)),
@@ -565,7 +567,7 @@ public class BlockchainService extends LifecycleService {
                             final Stopwatch watch = Stopwatch.createStarted();
                             final InputStream checkpointsInputStream = getAssets()
                                     .open(Constants.Files.CHECKPOINTS_ASSET);
-                            CheckpointManager.checkpoint(Constants.NETWORK_PARAMETERS, checkpointsInputStream,
+                            CheckpointManager.checkpoint(NETWORK_PARAMETERS, checkpointsInputStream,
                                     blockStore, earliestKeyCreationTimeSecs);
                             watch.stop();
                             log.info("checkpoints loaded, took {}", watch);
@@ -582,7 +584,7 @@ public class BlockchainService extends LifecycleService {
                 }
 
                 try {
-                    blockChain = new BlockChain(Constants.NETWORK_PARAMETERS, wallet, blockStore);
+                    blockChain = new BlockChain(NETWORK_PARAMETERS, wallet, blockStore);
                 } catch (final BlockStoreException x) {
                     throw new Error("blockchain cannot be created", x);
                 }
@@ -632,7 +634,7 @@ public class BlockchainService extends LifecycleService {
                 }
 
                 final Configuration.SyncMode syncMode = config.getSyncMode();
-                peerGroup = new PeerGroup(Constants.NETWORK_PARAMETERS, blockChain);
+                peerGroup = new PeerGroup(NETWORK_PARAMETERS, blockChain);
                 log.info("creating {}, sync mode: {}", peerGroup, syncMode);
                 peerGroup.setDownloadTxDependencies(0); // recursive implementation causes StackOverflowError
                 peerGroup.addWallet(wallet);
@@ -643,7 +645,7 @@ public class BlockchainService extends LifecycleService {
 
                 final int maxConnectedPeers = application.maxConnectedPeers();
                 final Set<HostAndPort> trustedPeers = config.getTrustedPeers();
-                if (Constants.NETWORK_PARAMETERS.getId().equals(NetworkParameters.ID_REGTEST)){
+                if (NETWORK_PARAMETERS.getId().equals(NetworkParameters.ID_REGTEST)){
                     log.info("adding The regtest peers, 192.168.1.2, 10.0.2.2:1844");
                     trustedPeers.add(HostAndPort.fromParts("192.168.1.2",18444));
                     trustedPeers.add(HostAndPort.fromParts("10.0.2.2",18444));
@@ -661,7 +663,7 @@ public class BlockchainService extends LifecycleService {
                         log.info("trusted peer '{}' resolved to {}", hostAndPort,
                                 socketAddress.getAddress().getHostAddress());
                         if (socketAddress != null) {
-                            peerGroup.addAddress(new PeerAddress(Constants.NETWORK_PARAMETERS, socketAddress), 10);
+                            peerGroup.addAddress(new PeerAddress(NETWORK_PARAMETERS, socketAddress), 10);
                             if (peerGroup.getMaxConnections() > maxConnectedPeers)
                                 peerGroup.setMaxConnections(maxConnectedPeers);
                         }
@@ -675,7 +677,7 @@ public class BlockchainService extends LifecycleService {
                 for (final HostAndPort trustedPeer : trustedPeers)
                     resolveDnsTask.resolve(trustedPeer);
 
-                if (Constants.NETWORK_PARAMETERS.getId().equals(NetworkParameters.ID_REGTEST)){
+                if (NETWORK_PARAMETERS.getId().equals(NetworkParameters.ID_REGTEST)){
                     log.info("regtest does not have seeds to discover the P2P network");
                 } else if (trustedPeerOnly) {
                     log.info("trusted peers only – not adding any random nodes from the P2P network");

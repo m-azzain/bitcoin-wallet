@@ -17,6 +17,8 @@
 
 package de.schildbach.wallet;
 
+import static de.schildbach.wallet.Constants.NETWORK_PARAMETERS;
+
 import android.app.ActivityManager;
 import android.app.Application;
 import android.app.NotificationChannel;
@@ -49,6 +51,8 @@ import de.schildbach.wallet.util.Bluetooth;
 import de.schildbach.wallet.util.CrashReporter;
 import de.schildbach.wallet.util.Toast;
 import de.schildbach.wallet.util.WalletUtils;
+
+import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.VersionMessage;
 import org.bitcoinj.crypto.MnemonicCode;
 import org.bitcoinj.utils.ContextPropagatingThreadFactory;
@@ -101,7 +105,7 @@ public class WalletApplication extends Application {
         org.bitcoinj.core.Context.propagate(Constants.CONTEXT);
 
         log.info("=== starting app using flavor: {}, build type: {}, network: {}", BuildConfig.FLAVOR,
-                BuildConfig.BUILD_TYPE, Constants.NETWORK_PARAMETERS.getId());
+                BuildConfig.BUILD_TYPE, NETWORK_PARAMETERS.getId());
 
         super.onCreate();
 
@@ -177,7 +181,7 @@ public class WalletApplication extends Application {
                         wallet = new WalletProtobufSerializer().readWallet(walletStream);
                         watch.stop();
 
-                        if (!wallet.getParams().equals(Constants.NETWORK_PARAMETERS))
+                        if (!wallet.getParams().equals(NETWORK_PARAMETERS))
                             throw new UnreadableWalletException(
                                     "bad wallet network parameters: " + wallet.getParams().getId());
 
@@ -195,7 +199,7 @@ public class WalletApplication extends Application {
                             new Toast(WalletApplication.this).postLongToast(R.string.toast_wallet_reset);
                     }
 
-                    if (!wallet.getParams().equals(Constants.NETWORK_PARAMETERS))
+                    if (!wallet.getParams().equals(NETWORK_PARAMETERS))
                         throw new Error("bad wallet network parameters: " + wallet.getParams().getId());
 
                     wallet.cleanup();
@@ -203,7 +207,7 @@ public class WalletApplication extends Application {
                             TimeUnit.MILLISECONDS, null);
                 } else {
                     final Stopwatch watch = Stopwatch.createStarted();
-                    wallet = Wallet.createDeterministic(Constants.NETWORK_PARAMETERS,
+                    wallet = Wallet.createDeterministic(NETWORK_PARAMETERS,
                             Constants.DEFAULT_OUTPUT_SCRIPT_TYPE);
                     walletFiles = wallet.autosaveToFile(walletFile, Constants.Files.WALLET_AUTOSAVE_DELAY_MS,
                             TimeUnit.MILLISECONDS, null);
@@ -329,7 +333,7 @@ public class WalletApplication extends Application {
     }
 
     public static String httpUserAgent(final String versionName) {
-        final VersionMessage versionMessage = new VersionMessage(Constants.NETWORK_PARAMETERS, 0);
+        final VersionMessage versionMessage = new VersionMessage(NETWORK_PARAMETERS, 0);
         versionMessage.appendToSubVer(Constants.USER_AGENT, versionName, null);
         return versionMessage.subVer;
     }
@@ -339,6 +343,7 @@ public class WalletApplication extends Application {
     }
 
     public int maxConnectedPeers() {
+        if(NETWORK_PARAMETERS.getId().equals(NetworkParameters.ID_REGTEST)) return 0;
         return activityManager.getMemoryClass() <= 128 ? 4 : 6;
     }
 
